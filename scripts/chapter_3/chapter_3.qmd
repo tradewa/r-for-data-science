@@ -13,6 +13,7 @@ format: html
 ```{r}
 library(nycflights13)
 library(tidyverse)
+library(Lahman)
 ```
 
 ```{r}
@@ -50,5 +51,198 @@ flights |>
 
 flights |>
   arrange(desc(dep_delay))
+```
+
+## 3.2.4 distinct()
+```{r}
+# Remove duplicate rows, if any
+flights |>
+  distinct()
+
+flights |>
+  distinct(origin, dest)
+
+# if you want to keep other columns when filtering for unique rows
+flights |>
+  distinct(origin, dest, .keep_all = TRUE)
+
+# find the number of occurences and sort
+flights |>
+  count(origin, dest, sort = TRUE)
+```
+
+# 3.3. Columns
+## 3.3.1 mutate()
+```{r}
+flights |>
+  mutate(
+    gain = dep_delay - arr_delay,
+    speed = distance / air_time * 60
+  )
+
+flights |>
+  mutate(
+    gain = dep_delay - arr_delay,
+    speed = distance / air_time * 60,
+    .before = 1
+  )
+
+flights |>
+  mutate(
+    gain = dep_delay - arr_delay,
+    speed = distance / air_time * 60,
+    .after = day
+  )
+
+flights |>
+  mutate(
+    gain = dep_delay - arr_delay,
+    hours = air_time / 60,
+    gain_per_hour = gain / hours,
+    .keep = "used"
+  )
+```
+
+## 3.3.2 select()
+```{r}
+
+# select column by specifying names
+flights |>
+  select(year, month, day)
+
+# select column from year to day
+flights |>
+  select(year:day)
+
+# select columns that are not between year to day
+flights |>
+  select(!year:day)
+
+# select column with char type
+flights |>
+  select(where(is.character))
+
+# rename variables as doing select()
+flights |>
+  select(tail_num = tailnum)
+```
+
+# 3.4 The pipe
+```{r}
+flights |>
+  filter(dest == "IAH") |>
+  mutate(speed = distance / air_time * 60) |> 
+  select(year:day, dep_time, carrier, flight, speed) |> 
+  arrange(desc(speed))
+  
+```
+
+# 3.5 Groups
+## 3.5.1 group_by()
+```{r}
+flights |>
+  group_by(month)
+```
+
+## 3.5.2 summarize()
+```{r}
+
+# summarize data frame into a single row
+flights |> 
+  group_by(month) |> 
+  summarize(
+    avg_delay = mean(dep_delay)
+  )
+
+# remove na
+flights |> 
+  group_by(month) |> 
+  summarize(
+    avg_delay = mean(dep_delay, na.rm = TRUE)
+  )
+
+flights |> 
+  group_by(month) |> 
+  summarize(
+    avg_delay = mean(dep_delay, na.rm = TRUE),
+    n = n()
+  )
+```
+
+## The slice_ functions
+```{r}
+flights |> 
+  group_by(dest) |> 
+  slice_max(arr_delay, n = 1) |> 
+  relocate(dest)
+```
+
+## 3.5.4 Grouping by multiple variables
+```{r}
+daily <- flights |> 
+  group_by(year, month, day)
+
+daily
+
+daily_flights <-
+  daily |> 
+  summarize(n = n())
+
+daily_flights <-
+  daily |> 
+  summarize(
+    n = n(),
+    .groups = "drop_last"
+  )
+```
+
+## Ungrouping
+```{r}
+daily |> 
+  ungroup()
+
+# now let's see if you summarize an ungrouped data frame
+daily |> 
+  ungroup() |> 
+  summarize(
+    avg_delay = mean(dep_delay, na.rm = TRUE),
+    flights = n()
+  )
+```
+
+## 3.5.6 .by
+```{r}
+flights |> 
+  summarize(
+    delay = mean(dep_delay, na.rm = TRUE),
+    n = n(),
+    .by = month
+  )
+
+# by multiple variables
+flights |> 
+  summarize(
+    delay = mean(dep_delay, na.rm = TRUE),
+    n = n(),
+    .by = c(origin, dest)
+  )
+```
+
+# 3.6. Case study: aggregates and sample size
+```{r}
+batters <- 
+  Lahman::Batting |> 
+  group_by(playerID) |> 
+  summarize(
+    performance = sum(H, na.rm = TRUE) / sum(AB, na.rm = TRUE),
+    n = sum(AB, na.rm = TRUE)
+  )
+batters
+
+batters |> 
+  filter(n > 100) |> 
+  ggplot(aes(x = n, y = performance)) +
+  geom_point(alpha = 1 / 10) +
+  geom_smooth(se = FALSE)
 ```
 

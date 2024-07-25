@@ -1,3 +1,10 @@
+# Other files
+.DS_Store
+chapter_2_files/
+chapter_3_files/
+chapter_4_files/
+chapter_5_files/
+
 # History files
 .Rhistory
 .Rapp.history
