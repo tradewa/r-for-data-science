@@ -1,10 +1,9 @@
 # Other files
 .DS_Store
 chapter_1_files/
-chapter_2_files/
 chapter_3_files/
-chapter_4_files/
 chapter_5_files/
+chapter_9_files/
 
 # History files
 .Rhistory
